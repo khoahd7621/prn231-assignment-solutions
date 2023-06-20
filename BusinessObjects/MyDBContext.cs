@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -20,9 +19,7 @@ namespace BusinessObjects
 
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<FlowerBouquet> FlowerBouquets { get; set; }
-        public virtual UserManager<Customer> UserManager { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
-        public virtual RoleManager<IdentityRole> RoleManager { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
         public virtual DbSet<Supplier> Suppliers { get; set; }
