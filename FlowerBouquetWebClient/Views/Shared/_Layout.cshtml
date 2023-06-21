@@ -36,6 +36,12 @@
                                 <a class="nav-link text-dark" asp-controller="Order" asp-action="Index">Manage Order</a>
                             </li>
                         }
+                        @if (User.IsInRole("Customer"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="MyOrder" asp-action="Index">My Order</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>

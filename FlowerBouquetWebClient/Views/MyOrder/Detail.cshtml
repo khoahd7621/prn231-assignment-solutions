@@ -1,0 +1,155 @@
+﻿@{
+    ViewData["Title"] = "Create Order";
+    string JWTToken = Context.Session.GetString("JWToken");
+    string USERID = Context.Session.GetString("USERID");
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between">
+        <h2>
+            Order Detail
+
+        </h2>
+        <a href="/MyOrder" class="btn btn-dark">Back</a>
+    </div>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-4">
+            <h5 class="text-primary">Order information</h5>
+            <dl class="row">
+                <dt class="col-sm-4">
+                    Order Id
+                </dt>
+                <dd id="OrderID" class="col-sm-8"></dd>
+                <dt class="col-sm-4">
+                    Ordered Date
+                </dt>
+                <dd id="OrderedDate" class="col-sm-8"></dd>
+                <dt class="col-sm-4">
+                    Shipped Date
+                </dt>
+                <dd id="ShippedDate" class="col-sm-8"></dd>
+                <dt class="col-sm-4">
+                    Total
+                </dt>
+                <dd id="Total" class="col-sm-8"></dd>
+                <dt class="col-sm-4">
+                    Status
+                </dt>
+                <dd id="Status" class="col-sm-8"></dd>
+                <dt class="col-sm-4">
+                    Freight
+                </dt>
+                <dd id="Freight" class="col-sm-8"></dd>
+            </dl>
+            <hr />
+            <h5 class="text-success">Customer information</h5>
+            <dl class="row">
+                <dt class="col-sm-4">
+                    Email
+                </dt>
+                <dd id="Email" class="col-sm-8"></dd>
+                <dt class="col-sm-4">
+                    Phone
+                </dt>
+                <dd id="Phone" class="col-sm-8"></dd>
+            </dl>
+        </div>
+        <div class="col-md-8">
+            <h5 class="text-danger">Items</h5>
+            <table class="table">
+                <thead>
+                    <tr class="bg-dark text-white">
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Unit Price
+                        </th>
+                        <th>
+                            Quantity
+                        </th>
+                        <th>
+                            Discount
+                        </th>
+                        <th>
+                            Total
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5">No Data</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            const params = (new URL(document.location)).searchParams;
+            const id = params.get("id");
+            const formatter = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+            });
+
+            GetOrder();
+
+            function GetOrder() {
+                $.ajax({
+                    url: `http://localhost:5167/api/Order/customer/detail/${id}`,
+                    type: "GET",
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + "@JWTToken");
+                    },
+                    success: function (result) {
+                        if (result.customer.id !== "@USERID") {
+                            alert("You don't have permission to view this order");
+                            window.location.href = "/MyOrder";
+                            return;
+                        }
+                        $("#OrderID").html(result.orderID);
+                        $("#OrderedDate").html(result.orderDate ? new Date(result.orderDate).toLocaleString() : "N/a");
+                        $("#ShippedDate").html(result.shippedDate ? new Date(result.shippedDate).toLocaleString() : "N/a");
+                        $("#Total").html(formatter.format(result.total || 0));
+                        const orderStatus = result.orderStatus;
+                        if (orderStatus === 0) {
+                            $("#Status").html("<div class='text-info'>Pending</div>")
+                        } else if (orderStatus === 1) {
+                            $("#Status").html("<div class='text-success'>Shipped</div>")
+                        } else if (orderStatus === 2) {
+                            $("#Status").html("<div class='text-danger'>Cancelled</div>")
+                        } else {
+                            $("#Status").html("<div class='text-warning'>Processing</div>")
+                        }
+                        $("#Freight").html(result.freight);
+                        $("#Email").html(result.customer.email);
+                        $("#Phone").html(result.customer.phone || "N/a");
+                        $("table tbody").empty();
+                        $.each(result.orderDetails, function (index, value) {
+                            $("table tbody").append($("<tr>"));
+                            const appendElement = $("tbody tr").last();
+                            appendElement.append($("<td>").html(value["flowerBouquet"]["flowerBouquetName"]));
+                            appendElement.append($("<td>").html(formatter.format(value["unitPrice"])));
+                            appendElement.append($("<td>").html(value["quantity"]));
+                            appendElement.append($("<td>").html(value["discount"]));
+                            appendElement.append($("<td>").html(formatter.format(value["quantity"] * value["unitPrice"] - value["discount"])));
+                        })
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        alert("Order not found");
+                        // Redirect to home
+                        window.location.href = "/MyOrder";
+                    }
+                })
+            }
+        })
+    </script>
+}

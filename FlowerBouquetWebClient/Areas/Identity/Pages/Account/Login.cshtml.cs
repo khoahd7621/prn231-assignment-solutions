@@ -5,9 +5,11 @@
 using BusinessObjects;
 using FlowerBouquetWebClient.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NuGet.Common;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Headers;
 using System.Text;
@@ -18,12 +20,13 @@ namespace FlowerBouquetWebClient.Areas.Identity.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly SignInManager<Customer> _signInManager;
+        private readonly UserManager<Customer> _userManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
         private readonly string AuthenUrl;
 
-        public LoginModel(SignInManager<Customer> signInManager, ILogger<LoginModel> logger, IConfiguration configuration)
+        public LoginModel(SignInManager<Customer> signInManager, ILogger<LoginModel> logger, IConfiguration configuration, UserManager<Customer> userManager)
         {
             _signInManager = signInManager;
             _logger = logger;
@@ -32,6 +35,7 @@ namespace FlowerBouquetWebClient.Areas.Identity.Pages.Account
             var contenType = new MediaTypeWithQualityHeaderValue("application/json");
             _httpClient.DefaultRequestHeaders.Accept.Add(contenType);
             AuthenUrl = "http://localhost:5167/api/Authentication";
+            _userManager = userManager;
         }
 
         /// <summary>
@@ -120,6 +124,11 @@ namespace FlowerBouquetWebClient.Areas.Identity.Pages.Account
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
+                    var user = _userManager.FindByEmailAsync(Input.Email).Result;
+                    if (user != null)
+                    {
+                        HttpContext.Session.SetString("USERID", user.Id);
+                    }
                     string loginForm = JsonSerializer.Serialize(Input);
                     var content = new StringContent(loginForm, Encoding.UTF8, "application/json");
                     var response = await _httpClient.PostAsync(AuthenUrl + "/login", content);

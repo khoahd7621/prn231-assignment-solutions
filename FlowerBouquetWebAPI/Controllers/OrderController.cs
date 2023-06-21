@@ -32,6 +32,21 @@ namespace FlowerBouquetWebAPI.Controllers
             return Ok(listOrder);
         }
 
+        [Authorize(Roles = UserRoles.Customer)]
+        [HttpGet("customer/detail/{id}")]
+        public ActionResult<Order> GetOrderDetailById(int id)
+        {
+            var order = repository.GetOrderById(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+            var orderDetails = orderDetailRepository.GetOrderDetailsByOrderId(id);
+            order.OrderDetails = orderDetails;
+            return Ok(order);
+        }
+
+
         [Authorize(Roles = UserRoles.Admin)]
         [HttpGet("{id}")]
         public ActionResult<Order> GetOrderById(int id) {

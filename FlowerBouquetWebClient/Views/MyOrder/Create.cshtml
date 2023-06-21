@@ -1,0 +1,236 @@
+﻿@{
+    ViewData["Title"] = "Create Order";
+    string JWTToken = Context.Session.GetString("JWToken");
+    string USERID = Context.Session.GetString("USERID");
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between">
+        <h2>
+            Create new order
+
+        </h2>
+        <a href="/Order" class="btn btn-dark">Back</a>
+    </div>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-8">
+            <div>
+                <h5>Add flower bouquet:</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="FlowerBouquet" class="control-label mb-1">Name</label>
+                            <select id="FlowerBouquet" class="form-control"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="Quantity" class="control-label mb-1">Quantity</label>
+                            <input id="Quantity" value="1" min="1" type="number" class="form-control" />
+                            <span id="Quantity-error" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="control-label"></label>
+                            <input id="AddToOrderBtn" type="submit" value="Add to order"
+                                   class="btn btn-warning d-block" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+            <div>
+                <h5>Order details: <span class="text-danger">*</span></h5>
+                <div id="OrderDetail-error" class="text-danger mb-3"></div>
+                <table class="table table-sm table-hover table-bordered">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Name</th>
+                            <th>Unit price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="OrderDetails">
+                        <tr>
+                            <td colspan='5'>No data</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group mb-2">
+                <label for="Freight" class="control-label mb-1">Freight <span class="text-danger">*</span></label>
+                <input id="Freight" class="form-control" />
+                <span id="Freight-error" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button id="AddButton" class="btn btn-primary w-100">Create Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            const listItems = [];
+
+            getAllFlowerBouquets();
+
+            const formatter = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+            });
+
+            function getAllFlowerBouquets() {
+                $.ajax({
+                    url: "http://localhost:5167/api/FlowerBouquet",
+                    type: "GET",
+                    success: function (result, status, xhr) {
+                        const listActiveFlowerBouquets = result.filter(x => x["flowerBouquetStatus"] === 1);
+                        $.each(listActiveFlowerBouquets, function (key, item) {
+                            $("#FlowerBouquet").append("<option value='" + item["flowerBouquetID"] + "'>" + item["flowerBouquetName"] + " - " + item["unitsInStock"] + "</option>");
+                        })
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(xhr)
+                    }
+                })
+            }
+
+            // handle add to listItems
+            $("#AddToOrderBtn").click(function () {
+                const flowerBouquetID = $("#FlowerBouquet").val();
+                const quantity = $("#Quantity").val();
+
+                if (parseInt(quantity) < 1) {
+                    $("#Quantity-error").html("Quantity must be greater than 0");
+                    return;
+                }
+
+                $.ajax({
+                    url: "http://localhost:5167/api/FlowerBouquet/" + flowerBouquetID,
+                    type: "GET",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + "@JWTToken");
+                    },
+                    success: function (result, status, xhr) {
+                        const previousItem = listItems.find(x => x["flowerBouquetID"] == flowerBouquetID);
+                        if (previousItem) {
+                            if (parseInt(previousItem["quantity"]) + parseInt(quantity) > result["unitsInStock"]) {
+                                $("#Quantity-error").html("Quantity must be less than or equal to units in stock");
+                                return;
+                            }
+                            previousItem["quantity"] = parseInt(previousItem["quantity"]) + parseInt(quantity);
+                        }
+                        else {
+                            if (parseInt(quantity) > result["unitsInStock"]) {
+                                $("#Quantity-error").html("Quantity must be less than or equal to units in stock");
+                                return;
+                            }
+                            const item = {
+                                "flowerBouquetID": flowerBouquetID,
+                                "flowerBouquetName": result["flowerBouquetName"],
+                                "unitPrice": result["unitPrice"],
+                                "quantity": quantity
+                            }
+                            listItems.push(item);
+                        }
+                        renderListItems();
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(xhr)
+                    }
+                })
+            })
+
+            function renderListItems() {
+                $("#OrderDetails").empty();
+                if (listItems.length == 0) {
+                    $("#OrderDetails").append("<tr><td colspan='5'>No data</td></tr>");
+                    return;
+                }
+                $.each(listItems, function (key, item) {
+                    $("#OrderDetails").append("<tr>" +
+                        "<td>" + item["flowerBouquetName"] + "</td>" +
+                        "<td>" + formatter.format(item["unitPrice"]) + "</td>" +
+                        "<td>" + item["quantity"] + "</td>" +
+                        "<td>" + formatter.format(item["unitPrice"] * item["quantity"]) + "</td>" +
+                        "<td><button class='btn btn-danger' onclick='deleteItem(" + item["flowerBouquetID"] + ")'>Delete</button></td>" +
+                        "</tr>");
+                })
+            }
+
+            // handle delete item
+            window.deleteItem = function (flowerBouquetID) {
+                const index = listItems.findIndex(x => x["flowerBouquetID"] == flowerBouquetID);
+                listItems.splice(index, 1);
+                renderListItems();
+            }
+
+            const validationOrder = () => {
+                let isValid = true;
+                if (listItems.length == 0) {
+                    $("#OrderDetail-error").html("Please add at least one item to order");
+                    isValid = false;
+                }
+                else {
+                    $("#OrderDetail-error").html("");
+                }
+                if ($("#Freight").val() == "") {
+                    $("#Freight-error").html("Freight is required");
+                    isValid = false;
+                }
+                else {
+                    $("#Freight-error").html("");
+                }
+                return isValid;
+            }
+
+            $("#AddButton").click(function () {
+                if (!validationOrder()) {
+                    return;
+                }
+                let amount = 0;
+                const orderDetails = listItems.map(item => {
+                    amount += item["unitPrice"] * item["quantity"];
+                    return {
+                        "flowerBouquetID": item["flowerBouquetID"],
+                        "quantity": item["quantity"],
+                        "unitPrice": item["unitPrice"]
+                    }
+                })
+                $.ajax({
+                    url: "http://localhost:5167/api/Order",
+                    type: "POST",
+                    data: JSON.stringify({
+                        orderDate: new Date().toISOString(),
+                        total: amount,
+                        freight: $("#Freight").val(),
+                        customerID: "@USERID",
+                        orderDetails: orderDetails
+                    }),
+                    contentType: "application/json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + "@JWTToken");
+                    },
+                    success: function (result, status, xhr) {
+                        alert("Create new order successfully");
+                        // Redirect to home
+                        window.location.href = "/MyOrder";
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(xhr)
+                        alert("Create failed! Refresh page and try again.");
+                    }
+                })
+            })
+        })
+    </script>
+}
