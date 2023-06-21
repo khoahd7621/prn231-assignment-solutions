@@ -1,0 +1,81 @@
+﻿using BusinessObjects;
+using FlowerBouquetWebAPI.Models;
+using Microsoft.AspNetCore.Mvc;
+using Repositories;
+using Repositories.impl;
+
+namespace FlowerBouquetWebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class FlowerBouquetController : ControllerBase
+    {
+        private IFlowerBouquetRepository repository = new FlowerBouquetRepository();
+
+        [HttpGet]
+        public ActionResult<IEnumerable<FlowerBouquet>> GetFlowerBouquets() => repository.GetFlowerBouquets();
+
+        [HttpGet("Search/{keyword}")]
+        public ActionResult<IEnumerable<FlowerBouquet>> Search(string keyword) => repository.Search(keyword);
+
+        [HttpGet("{id}")]
+        public ActionResult<FlowerBouquet> GetFlowerBouquetById(int id) => repository.GetFlowerBouquetById(id);
+
+        [HttpPost]
+        public IActionResult PostFlowerBouquet(PostFlowerBouquet postFlowerBouquet)
+        {
+            var f = new FlowerBouquet
+            {
+                FlowerBouquetName = postFlowerBouquet.FlowerBouquetName,
+                Description = postFlowerBouquet.Description,
+                UnitPrice = postFlowerBouquet.UnitPrice,
+                UnitsInStock = postFlowerBouquet.UnitsInStock,
+                FlowerBouquetStatus = postFlowerBouquet.FlowerBouquetStatus,
+                CategoryID = postFlowerBouquet.CategoryID,
+                SupplierID = postFlowerBouquet.SupplierID
+            };
+            repository.SaveFlowerBouquet(f);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteFlowerBouquet(int id)
+        {
+            var f = repository.GetFlowerBouquetById(id);
+            if (f == null)
+            {
+                return NotFound();
+            }
+            if (f.OrderDetails != null && f.OrderDetails.Count > 0)
+            {
+                f.FlowerBouquetStatus = 2;
+                repository.UpdateFlowerBouquet(f);
+            }
+            else
+            {
+                repository.DeleteFlowerBouquet(f);
+            }
+            return NoContent();
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult PutFlowerBouquet(int id, PostFlowerBouquet postFlowerBouquet)
+        {
+            var fTmp = repository.GetFlowerBouquetById(id);
+            if (fTmp == null)
+            {
+                return NotFound();
+            }
+
+            fTmp.FlowerBouquetName = postFlowerBouquet.FlowerBouquetName;
+            fTmp.Description = postFlowerBouquet.Description;
+            fTmp.UnitPrice = postFlowerBouquet.UnitPrice;
+            fTmp.UnitsInStock = postFlowerBouquet.UnitsInStock;
+            fTmp.CategoryID = postFlowerBouquet.CategoryID;
+            fTmp.SupplierID = postFlowerBouquet.SupplierID;
+
+            repository.UpdateFlowerBouquet(fTmp);
+            return NoContent();
+        }
+    }
+}

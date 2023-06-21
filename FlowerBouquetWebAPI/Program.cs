@@ -63,6 +63,14 @@ builder.Services.ConfigureSwaggerGen(c =>
 });
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(option =>
+{
+    option.AddDefaultPolicy(p =>
+            p.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -71,6 +79,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors();
 
 // Authentication & Authorization
 app.UseAuthentication();

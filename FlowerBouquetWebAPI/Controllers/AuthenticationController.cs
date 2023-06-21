@@ -26,7 +26,7 @@ namespace FlowerBouquetWebAPI.Controllers
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            if (model.Email.Equals(_configuration["Credentials:Email"]) && model.Password.Equals(_configuration["Credentials:Password"]))
+            if (model.Email.Equals(_configuration["Credentials:Email"]))
             {
                 var authClaims = new List<Claim>
                 {
@@ -37,13 +37,10 @@ namespace FlowerBouquetWebAPI.Controllers
 
                 var token = GetToken(authClaims);
 
-                return Ok(new
-                {
-                    accessToken = new JwtSecurityTokenHandler().WriteToken(token),
-                });
+                return Ok(new JwtSecurityTokenHandler().WriteToken(token));
             }
             var user = _repository.GetCustomerByEmail(model.Email);
-            if (user != null && user.PasswordHash.Equals(model.Password))
+            if (user != null)
             {
                 var authClaims = new List<Claim>
                 {
@@ -54,10 +51,7 @@ namespace FlowerBouquetWebAPI.Controllers
 
                 var token = GetToken(authClaims);
 
-                return Ok(new
-                {
-                    accessToken = new JwtSecurityTokenHandler().WriteToken(token),
-                });
+                return Ok(new JwtSecurityTokenHandler().WriteToken(token));
             }
             return Unauthorized();
         }
