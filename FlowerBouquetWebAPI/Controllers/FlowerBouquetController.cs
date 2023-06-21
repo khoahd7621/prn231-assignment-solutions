@@ -1,5 +1,6 @@
 ﻿using BusinessObjects;
 using FlowerBouquetWebAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repositories;
 using Repositories.impl;
@@ -21,9 +22,13 @@ namespace FlowerBouquetWebAPI.Controllers
         [HttpGet("{id}")]
         public ActionResult<FlowerBouquet> GetFlowerBouquetById(int id) => repository.GetFlowerBouquetById(id);
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPost]
         public IActionResult PostFlowerBouquet(PostFlowerBouquet postFlowerBouquet)
         {
+            if (repository.GetFlowerBouquets().FirstOrDefault(f => f.FlowerBouquetName.ToLower().Equals(postFlowerBouquet.FlowerBouquetName.ToLower())) != null) {
+                return BadRequest();
+            }
             var f = new FlowerBouquet
             {
                 FlowerBouquetName = postFlowerBouquet.FlowerBouquetName,
@@ -38,6 +43,7 @@ namespace FlowerBouquetWebAPI.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpDelete("{id}")]
         public IActionResult DeleteFlowerBouquet(int id)
         {
@@ -58,6 +64,7 @@ namespace FlowerBouquetWebAPI.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPut("{id}")]
         public IActionResult PutFlowerBouquet(int id, PostFlowerBouquet postFlowerBouquet)
         {
@@ -67,7 +74,15 @@ namespace FlowerBouquetWebAPI.Controllers
                 return NotFound();
             }
 
-            fTmp.FlowerBouquetName = postFlowerBouquet.FlowerBouquetName;
+            if (!fTmp.FlowerBouquetName.ToLower().Equals(postFlowerBouquet.FlowerBouquetName.ToLower()) 
+                && repository.GetFlowerBouquets().FirstOrDefault(f => f.FlowerBouquetName.ToLower().Equals(postFlowerBouquet.FlowerBouquetName.ToLower())) != null)
+            {
+                return BadRequest();
+            } else
+            {
+                fTmp.FlowerBouquetName = postFlowerBouquet.FlowerBouquetName;
+            }
+
             fTmp.Description = postFlowerBouquet.Description;
             fTmp.UnitPrice = postFlowerBouquet.UnitPrice;
             fTmp.UnitsInStock = postFlowerBouquet.UnitsInStock;

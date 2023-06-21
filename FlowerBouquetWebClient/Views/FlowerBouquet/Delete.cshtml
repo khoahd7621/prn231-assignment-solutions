@@ -1,0 +1,98 @@
+﻿@{
+    ViewData["Title"] = "Delete Flower Bouquet";
+    string JWTToken = Context.Session.GetString("JWToken");
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between">
+        <h2>
+            Are you sure to delete this flower bouquet?
+
+        </h2>
+        <a href="/FlowerBouquet" class="btn btn-dark">Back</a>
+    </div>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group mt-2">
+                <label for="FlowerBouquetName">Name</label>
+                <input type="text" class="form-control" id="FlowerBouquetName" readonly />
+            </div>
+            <div class="form-group mt-2">
+                <label for="Description">Description</label>
+                <input type="text" class="form-control" id="Description" readonly />
+            </div>
+            <div class="form-group mt-2">
+                <label for="UnitPrice">Unit price</label>
+                <input type="number" value="1" min="1" class="form-control" id="UnitPrice" readonly />
+            </div>
+            <div class="form-group mt-2">
+                <label for="UnitsInStock">Units in stock</label>
+                <input type="number" value="1" min="1" class="form-control" id="UnitsInStock" readonly />
+            </div>
+            <div class="form-group mt-2" readonly>
+                <label for="Category">Category</label>
+                <select class="form-select" id="Category" disabled></select>
+            </div>
+            <div class="form-group mt-2" readonly>
+                <label for="Supplier">Supplier</label>
+                <select class="form-select" id="Supplier" disabled></select>
+            </div>
+            <div class="form-group mt-4">
+                <button id="DeleteButton" class="btn btn-danger w-100">Yes. Delete!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            const params = (new URL(document.location)).searchParams;
+            const id = params.get("id");
+            GetFlowerBouquet();
+
+            function GetFlowerBouquet() {
+                $.ajax({
+                    url: `http://localhost:5167/api/FlowerBouquet/${id}`,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (result) {
+                        $("#FlowerBouquetName").val(result.flowerBouquetName);
+                        $("#Description").val(result.description);
+                        $("#UnitPrice").val(result.unitPrice);
+                        $("#UnitsInStock").val(result.unitsInStock);
+                        $("#Category").append("<option value='" + result["category"]["categoryID"] + "'>" + result["category"]["categoryName"] + "</option>");
+                        $("#Supplier").append("<option value='" + result["supplier"]["supplierID"] + "'>" + result["supplier"]["supplierName"] + "</option>");
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        // Redirect to home
+                        window.location.href = "/FlowerBouquet";
+                    }
+                })
+            }
+
+            $("#DeleteButton").click(function () {
+                $.ajax({
+                    url: `http://localhost:5167/api/FlowerBouquet/${id}`,
+                    type: "Delete",
+                    contentType: "application/json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + "@JWTToken");
+                    },
+                    success: function (result, status, xhr) {
+                        alert("Delete successfully");
+                        // Redirect to home
+                        window.location.href = "/FlowerBouquet";
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(xhr)
+                        alert("Delete failed");
+                    }
+                })
+            })
+        })
+    </script>
+}
