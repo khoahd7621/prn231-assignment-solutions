@@ -1,0 +1,125 @@
+﻿@{
+    ViewData["Title"] = "List Orders";
+    string JWTToken = Context.Session.GetString("JWToken");
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>List orders</h2>
+
+        <p>
+            <a href="/Order/Create" class="btn btn-dark">Create New Order</a>
+        </p>
+    </div>
+
+    <table class="table table-striped table-hover table-bordered m-2">
+        <thead class="table-dark">
+            <tr>
+                <th>Customer email</th>
+                <th>Order date</th>
+                <th>Ship date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Freight</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="7" class="text-center">No data</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            const formatter = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+            });
+
+            ShowAllOrders();
+
+            function ShowAllOrders() {
+                $.ajax({
+                    url: "http://localhost:5167/api/Order",
+                    type: "GET",
+                    contentType: "application/json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + "@JWTToken");
+                    },
+                    success: function (result, status, xhr) {
+                        $("table tbody").empty();
+                        $.each(result, function (index, value) {
+                            $("table tbody").append($("<tr>"));
+                            const appendElement = $("tbody tr").last();
+                            appendElement.append($("<td>").html(value["customer"]["email"]));
+                            appendElement.append($("<td>").html(value["orderDate"] ? new Date(value["orderDate"]).toLocaleString() : "N/a"));
+                            appendElement.append($("<td>").html(value["shippedDate"] ? new Date(value["shippedDate"]).toLocaleString() : "N/a"));
+                            appendElement.append($("<td>").html(formatter.format(value["total"])));
+                            if (value["orderStatus"] === 0) {
+                                appendElement.append($("<td>").html("<div class='text-info'>Pending</div>"));
+                            } else if (value["orderStatus"] === 1) {
+                                appendElement.append($("<td>").html("<div class='text-success'>Shipped</div>"));
+                            } else if (value["orderStatus"] === 2) {
+                                appendElement.append($("<td>").html("<div class='text-danger'>Cancelled</div>"));
+                            }
+                            appendElement.append($("<td>").html(value["freight"]));
+                            appendElement.append($("<td>").html(() => {
+                                let content = "<a class='btn btn-primary' href='/Order/Detail?id=" + value["orderID"] + "'>Detail</a>"
+                                if (value["orderStatus"] === 0) {
+                                    content += "<a class='btn btn-success ms-2' onclick='shippedOrder(" + value["orderID"] + ")'>Shipped</a>" +
+                                        "<a class='btn btn-danger ms-2' onclick='cancelledOrder(" + value["orderID"] + ")'>Cancelled</a>";
+                                }
+                                return content;
+                            }));
+                        })
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(xhr);
+                    }
+                })
+            }
+
+            // Handle shipped order
+            window.shippedOrder = function (id) {
+                $.ajax({
+                    url: "http://localhost:5167/api/Order/shipped/" + id,
+                    type: "PUT",
+                    contentType: "application/json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + "@JWTToken");
+                    },
+                    success: function (result, status, xhr) {
+                        alert("Shipped order successfully");
+                        ShowAllOrders();
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(xhr);
+                    }
+                })
+            }
+
+            // Handle cancelled order
+            window.cancelledOrder = function (id) {
+                $.ajax({
+                    url: "http://localhost:5167/api/Order/cancel/" + id,
+                    type: "PUT",
+                    contentType: "application/json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + "@JWTToken");
+                    },
+                    success: function (result, status, xhr) {
+                        alert("Cancelled order successfully");
+                        ShowAllOrders();
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(xhr);
+                    }
+                })
+            }
+        })
+    </script>
+}

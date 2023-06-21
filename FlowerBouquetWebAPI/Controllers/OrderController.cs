@@ -1,5 +1,6 @@
 ﻿using BusinessObjects;
 using FlowerBouquetWebAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Repositories;
 using Repositories.impl;
@@ -11,63 +12,88 @@ namespace FlowerBouquetWebAPI.Controllers
     public class OrderController : ControllerBase
     {
         private IOrderRepository repository = new OrderRepository();
+        private IOrderDetailRepository orderDetailRepository = new OrderDetailRepository();
+        private IFlowerBouquetRepository flowerBouquetRepository = new FlowerBouquetRepository();
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpGet]
-        public ActionResult<IEnumerable<Order>> GetOrders() => repository.GetOrders();
+        public ActionResult<IEnumerable<Order>> GetOrders() => Ok(repository.GetOrders());
 
+        [Authorize(Roles = UserRoles.Customer)]
         [HttpGet("customer/{id}")]
-        public ActionResult<IEnumerable<Order>> GetAllOrdersByCustomerId(string id) => repository.GetAllOrdersByCustomerId(id);
+        public ActionResult<IEnumerable<Order>> GetAllOrdersByCustomerId(string id)
+        {
+            var listOrder = repository.GetAllOrdersByCustomerId(id);
+            foreach (var o in listOrder)
+            {
+                var orderDetails = orderDetailRepository.GetOrderDetailsByOrderId(o.OrderID);
+                o.OrderDetails = orderDetails;
+            }
+            return Ok(listOrder);
+        }
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpGet("{id}")]
-        public ActionResult<Order> GetOrderById(int id) => repository.GetOrderById(id);
+        public ActionResult<Order> GetOrderById(int id) {
+            var order = repository.GetOrderById(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+            var orderDetails = orderDetailRepository.GetOrderDetailsByOrderId(id);
+            order.OrderDetails = orderDetails;
+            return Ok(order);
+        }
 
+        [Authorize(Roles = "Admin, Customer")]
         [HttpPost]
         public ActionResult<Order> PostOrder(PostOrder postOrder)
         {
+            foreach (var od in postOrder.OrderDetails)
+            { 
+                var fb = flowerBouquetRepository.GetFlowerBouquetById(od.FlowerBouquetID);
+                if (fb == null)
+                {
+                    return NotFound();
+                }
+                if (fb.FlowerBouquetStatus != 1)
+                {
+                    return BadRequest();
+                }
+                if (fb.UnitsInStock < od.Quantity)
+                {
+                    return BadRequest();
+                }
+            }
             var order = new Order
             {
                 OrderDate = postOrder.OrderDate,
                 ShippedDate = null,
                 Total = postOrder.Total,
-                OrderStatus = postOrder.OrderStatus,
+                OrderStatus = 0,
                 Freight = postOrder.Freight,
                 CustomerID = postOrder.CustomerID
             };
-            return repository.SaveOrder(order);
-        }
-
-        [HttpDelete("{id}")]
-        public IActionResult DeleteOrder(int id)
-        {
-            var o = repository.GetOrderById(id);
-            if (o == null)
+            var savedOrder = repository.SaveOrder(order);
+            foreach (var od in postOrder.OrderDetails)
             {
-                return NotFound();
+                var fb = flowerBouquetRepository.GetFlowerBouquetById(od.FlowerBouquetID);
+                fb.UnitsInStock -= od.Quantity;
+                var orderDetail = new OrderDetail
+                {
+                    FlowerBouquetID = od.FlowerBouquetID,
+                    UnitPrice = od.UnitPrice,
+                    Quantity = od.Quantity,
+                    OrderID = savedOrder.OrderID,
+                    Discount = 0
+                };
+                flowerBouquetRepository.UpdateFlowerBouquet(fb);
+                orderDetailRepository.SaveOrderDetail(orderDetail);
             }
-            repository.DeleteOrder(o);
-            return NoContent();
+            return Ok(savedOrder);
         }
 
-        [HttpPut("{id}")]
-        public IActionResult PutOrder(int id, Order order)
-        {
-            var oTmp = repository.GetOrderById(id);
-            if (oTmp == null)
-            {
-                return NotFound();
-            }
-
-            oTmp.OrderDate = order.OrderDate;
-            oTmp.ShippedDate = order.ShippedDate;
-            oTmp.Total = order.Total;
-            oTmp.OrderStatus = order.OrderStatus;
-            oTmp.Freight = order.Freight;
-            oTmp.CustomerID = order.CustomerID;
-
-            repository.UpdateOrder(oTmp);
-            return NoContent();
-        }
-
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPut("shipped/{id}")]
         public IActionResult PutOrderShipped(int id)
         {
@@ -76,12 +102,17 @@ namespace FlowerBouquetWebAPI.Controllers
             {
                 return NotFound();
             }
+            if (oTmp.OrderStatus != 0)
+            {
+                return BadRequest();
+            }
             oTmp.ShippedDate = DateTime.Now;
             oTmp.OrderStatus = 1;
             repository.UpdateOrder(oTmp);
             return NoContent();
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPut("cancel/{id}")]
         public IActionResult PutOrderCancel(int id)
         {
@@ -90,8 +121,19 @@ namespace FlowerBouquetWebAPI.Controllers
             {
                 return NotFound();
             }
+            if (oTmp.OrderStatus != 0)
+            {
+                return BadRequest();
+            }
             oTmp.OrderStatus = 2;
             repository.UpdateOrder(oTmp);
+            var orderDetails = orderDetailRepository.GetOrderDetailsByOrderId(id);
+            foreach (var od in orderDetails)
+            {
+                var fb = flowerBouquetRepository.GetFlowerBouquetById(od.FlowerBouquetID);
+                fb.UnitsInStock += od.Quantity;
+                flowerBouquetRepository.UpdateFlowerBouquet(fb);
+            }
             return NoContent();
         }
     }
