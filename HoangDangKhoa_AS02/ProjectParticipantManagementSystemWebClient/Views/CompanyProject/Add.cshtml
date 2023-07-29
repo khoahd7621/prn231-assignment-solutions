@@ -1,0 +1,65 @@
+﻿@model DataTransfer.ParticipantPostRequest
+
+@{
+    ViewData["Title"] = "Add Participant";
+    int companyProjectID = (int)ViewData["CompanyProjectID"];
+}
+
+<h1>Add Employee to Project</h1>
+
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewData["ErrorMessage"]</div>
+}
+@if (ViewData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@ViewData["SuccessMessage"]</div>
+}
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Add">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="CompanyProjectID" value=@companyProjectID />
+            <div class="form-group mb-2">
+                <label asp-for="EmployeeID" class="control-label mb-1">Employee</label>
+                <select asp-for="EmployeeID" class="form-control" required>
+                    @foreach (var std in (List<BusinessObjects.Employee>)ViewData["listEmployees"])
+                    {
+                        <option value="@std.EmployeeID">@std.FullName</option>
+                    }
+                </select>
+                <span asp-validation-for="EmployeeID" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="StartDate" class="control-label mb-1">Start Date</label>
+                <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="EndDate" class="control-label mb-1">End Date</label>
+                <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                <span asp-validation-for="EndDate" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="ProjectRole" class="control-label mb-1">Description</label>
+                <select asp-for="ProjectRole" asp-items="Html.GetEnumSelectList<BusinessObjects.Enums.ProjectRole>()" ></select>
+                <span asp-validation-for="ProjectRole" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

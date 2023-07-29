@@ -1,0 +1,113 @@
+﻿@model IEnumerable<BusinessObjects.FlowerBouquet>
+
+@{
+    ViewData["Title"] = "Index";
+    string keyword = ViewData["keyword"] as string;
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1>List flower bouquets</h1>
+
+    <p>
+        <a asp-action="Create" class="btn btn-dark">Create New</a>
+    </p>
+</div>
+
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewData["ErrorMessage"]</div>
+}
+@if (ViewData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@ViewData["SuccessMessage"]</div>
+}
+
+<div class="row">
+    <div class="col-4">
+        <form class="my-4" asp-action="Search">
+            <h4>Search</h4>
+            <div class="form-group mb-2">
+                <input name="keyword" value="@keyword" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <input type="submit" value="Search" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-info">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>
+                Name
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                Unit price
+            </th>
+            <th>
+                Units in stock
+            </th>
+            <th>
+                Status
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Category)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Supplier)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int stt = 0;
+        }
+@foreach (var item in Model) {
+        <tr>
+            <td>@(stt++)</td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FlowerBouquetName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Description)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UnitPrice)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UnitsInStock)
+            </td>
+            <td>
+                @if (item.FlowerBouquetStatus == 1)
+                {
+                    <span class="text-success">Active</span>
+                }
+                else
+                {
+                    <span class="text-danger">Delete</span>
+                }
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Category.CategoryName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Supplier.SupplierName)
+            </td>
+            <td>
+                    @if (item.FlowerBouquetStatus == 1)
+                    {
+                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.FlowerBouquetID">Edit</a>
+                        <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.FlowerBouquetID">Delete</a>
+                    }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

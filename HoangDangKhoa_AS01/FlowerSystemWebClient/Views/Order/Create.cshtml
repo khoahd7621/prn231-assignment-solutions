@@ -1,0 +1,140 @@
+﻿@model DataTransfer.OrderRequest
+
+@{
+    ViewData["Title"] = "Create";
+    List<DataTransfer.OrderItemRequest> OrderItems = (List<DataTransfer.OrderItemRequest>)ViewData["OrderItems"];
+    string Role = Context.Session.GetString("ROLE");
+}
+
+<h1>Create an order</h1>
+
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewData["ErrorMessage"]</div>
+}
+@if (ViewData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@ViewData["SuccessMessage"]</div>
+}
+
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        <div>
+            <h4>Add flower bouquet:</h4>
+            <form class="form-group mb-2" method="post" asp-action="AddOrderItem">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="ProductID" class="control-label mb-1">Name</label>
+                            <select asp-for="ProductID" id="FlowerBouquetId" class="form-control">
+                                @foreach (var std in (List<BusinessObjects.FlowerBouquet>)ViewData["FlowerBouquets"])
+                                {
+                                    <option value="@std.FlowerBouquetID">@std.FlowerBouquetName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="Quantity" class="control-label mb-1">Quantity</label>
+                            <input asp-for="Quantity" value="1" min="1" type="number" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="control-label"></label>
+                            <input type="submit" value="Add" class="btn btn-warning d-block" />
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <hr />
+        <div>
+            <h4>List items</h4>
+            @if (OrderItems == null || OrderItems.Count == 0)
+            {
+                <p>No items</p>
+            }
+            else
+            {
+                decimal total = 0;
+                int stt = 1;
+
+                <table class="table">
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                    @foreach (var cartitem in OrderItems)
+                    {
+                        var totalMoney = cartitem.Quantity * cartitem.FlowerBouquet.UnitPrice;
+                        total += totalMoney;
+
+                        <tr>
+                            <td>@(stt++)</td>
+                            <td>@cartitem.FlowerBouquet.FlowerBouquetName</td>
+                            <td>@(cartitem.FlowerBouquet.UnitPrice.ToString("n0"))</td>
+                            <td>@cartitem.Quantity</td>
+                            <td>@(totalMoney.ToString("n0"))</td>
+                            <td>
+                                <form asp-action="RemoveOrderItem">
+                                    <input hidden asp-for="ProductID" value="@cartitem.FlowerBouquet.FlowerBouquetID" />
+                                    <input type="submit" value="Delete" class="btn btn-danger" />
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    <tr>
+                        <td colspan="4" class="text-right">Total</td>
+                        <td>@(total.ToString("n0"))</td>
+                        <td></td>
+                    </tr>
+                </table>
+            }
+        </div>
+    </div>
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group mb-2">
+                <label asp-for="Freight" class="control-label mb-1"></label>
+                <input asp-for="Freight" class="form-control" />
+                <span asp-validation-for="Freight" class="text-danger"></span>
+            </div>
+            @if (Role == "Admin")
+            {
+                <div class="form-group mb-2">
+                    <label asp-for="CustomerID" class="control-label mb-1">Customer</label>
+                    <select asp-for="CustomerID" class="form-control">
+                        @foreach (var std in (List<BusinessObjects.Customer>)ViewData["Customers"])
+                        {
+                            <option value="@std.CustomerID">@std.CustomerName</option>
+                        }
+                    </select>
+                </div>
+            }
+            <div class="form-group mt-4 mb-2">
+                <input type="submit" value="Create" class="btn btn-primary" />
+
+                @if (Role == "Admin")
+                {
+                    <a class="btn btn-danger" asp-action="Index">Cancel</a>
+                }
+                else
+                {
+                    <a class="btn btn-danger" asp-action="OrderHistory">Cancel</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

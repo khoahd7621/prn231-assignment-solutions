@@ -1,0 +1,162 @@
+﻿@{
+    String Role = Context.Session.GetString("ROLE");
+    ViewData["Title"] = "OrderDetail";
+    BusinessObjects.Order Order = ViewData["Order"] != null ? (BusinessObjects.Order)ViewData["Order"] : new BusinessObjects.Order();
+    List<BusinessObjects.OrderDetail> OrderDetails = ViewData["OrderDetails"] != null ? (List<BusinessObjects.OrderDetail>)ViewData["OrderDetails"] : new List<BusinessObjects.OrderDetail>();
+}
+
+<h1>Order Detail</h1>
+
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewData["ErrorMessage"]</div>
+}
+@if (ViewData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@ViewData["SuccessMessage"]</div>
+}
+
+<div class="row">
+    <div class="col-md-4">
+        <h4 class="text-primary">Order</h4>
+        <dl class="row">
+            <dt class="col-sm-4">
+                Order Id
+            </dt>
+            <dd class="col-sm-8">
+                @Order.OrderID
+            </dd>
+            <dt class="col-sm-4">
+                Ordered Date
+            </dt>
+            <dd class="col-sm-8">
+                @Order.OrderDate
+            </dd>
+            <dt class="col-sm-4">
+                Shipped Date
+            </dt>
+            <dd class="col-sm-8">
+                @Order.ShippedDate
+            </dd>
+            <dt class="col-sm-4">
+                Total
+            </dt>
+            <dd class="col-sm-8">
+                @Order.Total
+            </dd>
+            <dt class="col-sm-4">
+                Status
+            </dt>
+            <dd class="col-sm-8">
+                @if (Order.OrderStatus == 0)
+                {
+                    <span class="text-warning">Pending</span>
+                }
+                else if (Order.OrderStatus == 1)
+                {
+                    <span class="text-success">Shipped</span>
+                }
+                else if (Order.OrderStatus == 2)
+                {
+                    <span class="text-danger">Cancelled</span>
+                }
+            </dd>
+            <dt class="col-sm-4">
+                Freight
+            </dt>
+            <dd class="col-sm-8">
+                @Order.Freight
+            </dd>
+        </dl>
+        <hr/>
+        <h4 class="text-success">Customer</h4>
+        <dl class="row">
+            <dt class="col-sm-4">
+                Name
+            </dt>
+            <dd class="col-sm-8">
+                @Order.Customer.CustomerName
+            </dd>
+            <dt class="col-sm-4">
+                Email
+            </dt>
+            <dd class="col-sm-8">
+                @Order.Customer.Email
+            </dd>
+            <dt class="col-sm-4">
+                City
+            </dt>
+            <dd class="col-sm-8">
+                @Order.Customer.City
+            </dd>
+            <dt class="col-sm-4">
+                Country
+            </dt>
+            <dd class="col-sm-8">
+                @Order.Customer.Country
+            </dd>
+        </dl>
+    </div>
+    <div class="col-md-8">
+        <h4 class="text-danger">Items</h4>
+        <table class="table">
+            <thead>
+                <tr class="bg-dark text-white">
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Unit Price
+                    </th>
+                    <th>
+                        Quantity
+                    </th>
+                    <th>
+                        Discount
+                    </th>
+                    <th>
+                        Total
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in OrderDetails)
+                {
+                    <tr>
+                        <td>
+                            @item.FlowerBouquet.FlowerBouquetName
+                        </td>
+                        <td>
+                            @item.UnitPrice
+                        </td>
+                        <td>
+                            @item.Quantity
+                        </td>
+                        <td>
+                            @item.Discount
+                        </td>
+                        <td>
+                            @((item.UnitPrice - item.Discount) * item.Quantity)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@if (Role != null && Role == "Admin")
+{
+    <div>
+        @if (Order.OrderStatus == 0)
+        {
+            <span><a>Edit</a> |</span>
+        }
+        <a asp-action="Index">Back to List</a>
+    </div>
+} else
+{
+    <div>
+        <a asp-action="OrderHistory">Back to List</a>
+    </div>
+}
+

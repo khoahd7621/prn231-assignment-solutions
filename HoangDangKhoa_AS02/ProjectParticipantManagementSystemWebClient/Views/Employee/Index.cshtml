@@ -1,0 +1,79 @@
+﻿@{
+    ViewData["Title"] = "List Employees";
+    List<BusinessObjects.Employee> listEmployees = ViewData["listEmployees"] as List<BusinessObjects.Employee>;
+    string keyword = ViewData["keyword"] as string;
+}
+
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewData["ErrorMessage"]</div>
+}
+@if (ViewData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@ViewData["SuccessMessage"]</div>
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1>List employees</h1>
+
+    <p>
+        <a asp-action="Create" class="btn btn-dark">Create New</a>
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-4">
+        <form class="my-4" asp-action="Search">
+            <h4>Search</h4>
+            <div class="form-group mb-2">
+                <input name="keyword" value="@keyword" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <input type="submit" value="Search" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-info">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (listEmployees == null || listEmployees.Count() == 0)
+{
+    <div>No employees found</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Full Name</th>
+                <th>Skills</th>
+                <th>Telephone</th>
+                <th>Address</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in listEmployees)
+            {
+                <tr>
+                    <td>@item.EmailAddress</td>
+                    <td>@item.FullName</td>
+                    <td>@item.Skills</td>
+                    <td>@item.Telephone</td>
+                    <td>@item.Address</td>
+                    <td>@item.Role</td>
+                    <td>@item.Department.DepartmentName</td>
+                    <td>@item.Status</td>
+                    <td>
+                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.EmployeeID">Edit</a>
+                        <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.EmployeeID">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

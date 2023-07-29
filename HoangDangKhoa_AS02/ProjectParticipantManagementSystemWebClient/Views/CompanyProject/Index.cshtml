@@ -1,0 +1,69 @@
+﻿@{
+    ViewData["Title"] = "List Company Projects";
+    List<BusinessObjects.CompanyProject> listCompanyProjects = ViewData["listCompanyProjects"] as List<BusinessObjects.CompanyProject>;
+    string keyword = ViewData["keyword"] as string;
+}
+
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewData["ErrorMessage"]</div>
+}
+@if (ViewData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@ViewData["SuccessMessage"]</div>
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1>List company projects</h1>
+
+    <p>
+        <a asp-action="Create" class="btn btn-dark">Create New</a>
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-4">
+        <form class="my-4" asp-action="Search">
+            <h4>Search</h4>
+            <div class="form-group mb-2">
+                <input name="keyword" value="@keyword" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <input type="submit" value="Search" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-info">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (listCompanyProjects == null || listCompanyProjects.Count() == 0)
+{
+    <div>No company projects found</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Project Name</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in listCompanyProjects)
+            {
+                <tr>
+                    <td>@item.ProjectName</td>
+                    <td>@item.ProjectDescription</td>
+                    <td>
+                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.CompanyProjectID">Edit</a>
+                        <a class="btn btn-primary" asp-action="Add" asp-route-id="@item.CompanyProjectID">Add participant</a>
+                        <a class="btn btn-info" asp-action="ProjectParticipant" asp-route-id="@item.CompanyProjectID">View participant</a>
+                        <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.CompanyProjectID">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

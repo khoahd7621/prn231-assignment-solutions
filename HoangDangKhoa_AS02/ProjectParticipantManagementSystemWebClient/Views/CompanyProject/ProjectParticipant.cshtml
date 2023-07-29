@@ -1,0 +1,49 @@
+﻿@{
+    ViewData["Title"] = "Company Project Paticipant";
+    BusinessObjects.CompanyProject companyProject = ViewData["companyProject"] as BusinessObjects.CompanyProject;
+    List<BusinessObjects.ParticipatingProject> listParticipants = ViewData["listParticipants"] as List<BusinessObjects.ParticipatingProject>;
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1>Project Participant</h1>
+</div>
+
+<div class="row my-3">
+    <h4>Project Name: @companyProject.ProjectName</h4>
+    <h5>Description: @companyProject.ProjectDescription</h5>
+</div>
+
+@if (listParticipants == null || listParticipants.Count() == 0)
+{
+    <div>No participants</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Full Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Project Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in listParticipants)
+            {
+                <tr>
+                    <td>@item.EmployeeID</td>
+                    <td>@item.Employee.FullName</td>
+                    <td>@item.StartDate</td>
+                    <td>@item.EndDate</td>
+                    <td>@item.ProjectRole</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

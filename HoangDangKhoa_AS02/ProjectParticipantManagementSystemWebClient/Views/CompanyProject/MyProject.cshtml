@@ -1,0 +1,39 @@
+﻿@{
+    ViewData["Title"] = "My Project";
+    List<BusinessObjects.ParticipatingProject> listParticipants = ViewData["listParticipants"] as List<BusinessObjects.ParticipatingProject>;
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1>My Project</h1>
+</div>
+
+@if (listParticipants == null || listParticipants.Count() == 0)
+{
+    <div>No project</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Project Name</th>
+                <th>Project Role</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Project Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in listParticipants)
+            {
+                <tr>
+                    <td>@item.CompanyProject.ProjectName</td>
+                    <td>@item.ProjectRole</td>
+                    <td>@item.StartDate</td>
+                    <td>@item.EndDate</td>
+                    <td>@item.CompanyProject.ProjectDescription</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

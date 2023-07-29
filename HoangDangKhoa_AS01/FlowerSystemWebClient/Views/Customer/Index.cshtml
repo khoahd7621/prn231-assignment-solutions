@@ -1,0 +1,94 @@
+﻿@model IEnumerable<BusinessObjects.Customer>
+
+@{
+    ViewData["Title"] = "ListCustomers";
+    string keyword = ViewData["keyword"] as string;
+}
+
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewData["ErrorMessage"]</div>
+}
+@if (ViewData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@ViewData["SuccessMessage"]</div>
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1>List customers</h1>
+
+    <p>
+        <a asp-action="Create" class="btn btn-dark">Create New</a>
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-4">
+        <form class="my-4" asp-action="Search">
+            <h4>Search</h4>
+            <div class="form-group mb-2">
+                <input name="keyword" value="@keyword" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <input type="submit" value="Search" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-info">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Count() == 0)
+{
+    <div>No customers found</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.CustomerName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Email)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.City)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Country)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.DateOfBirth)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CustomerName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Email)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.City)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Country)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.DateOfBirth)
+                    </td>
+                    <td>
+                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.CustomerID">Edit</a>
+                        <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.CustomerID">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
